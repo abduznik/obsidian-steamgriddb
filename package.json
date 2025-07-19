@@ -1,0 +1,22 @@
+{
+  "name": "obsidian-steamgriddb",
+  "version": "1.0.0",
+  "description": "Embeds images from SteamGridDB based on the note title.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "tsc -watch",
+    "build": "esbuild main.ts --bundle --outfile=main.js --external:obsidian --format=cjs --platform=node"
+  },
+  "keywords": [],
+  "author": "Gemini",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^16.11.6",
+    "obsidian": "^0.15.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "steamgriddb": "^2.2.0",
+    "tslib": "^2.8.1"
+  }
+}
