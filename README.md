@@ -43,7 +43,7 @@ This method allows you to automatically trigger the image embedding process when
     // ... existing template code ...
 
     // Call the interactive command to embed SteamGridDB image
-    await app.commands.executeCommandById('obsidian-steamgriddb:embed-steamgriddb-image-for-note');
+    await app.commands.executeCommandById('steamgriddb-embedder:embed-steamgriddb-image-for-note');
 
     // ... rest of your template code ...
     %>
@@ -57,7 +57,7 @@ This method allows you to automatically trigger the image embedding process when
     const urlTitle = title.trim().replace(/\s+/g, "+");
     tR += `---\nPlatform: PC\nStatus: Not Playing\nFinished: \n---\n\n# ${title}\n\n`;
     // Call the new command after the title
-    await app.commands.executeCommandById('obsidian-steamgriddb:embed-steamgriddb-image-for-note');
+    await app.commands.executeCommandById('steamgriddb-embedder:embed-steamgriddb-image-for-note');
     tR += `\n## Notes:\n-\n`;
     %>
     ```
