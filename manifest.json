@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Embeds images from SteamGridDB based on the note title.",
-	"author": "Gemini",
+	"author": "abduznik",
 	"authorUrl": "",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }
