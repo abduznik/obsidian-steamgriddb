@@ -58,6 +58,7 @@ This method allows you to automatically trigger the image embedding process when
 Platform: PC
 Status: Not Playing
 Finished: 
+```
 ---
 
 # ${title}
