@@ -1,4 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, request } from 'obsidian';
+import './styles.css';
 import SGDB from "steamgriddb";
 
 interface SteamGridDBSettings {
@@ -276,23 +277,12 @@ class ImageSelectModal extends Modal {
 		contentEl.createEl('h2', { text: 'Select an Image' });
 
 		const imageContainer = contentEl.createDiv({ cls: 'image-grid' });
-		imageContainer.style.display = "flex";
-		imageContainer.style.flexWrap = "wrap";
-		imageContainer.style.gap = "10px";
-		imageContainer.style.maxHeight = "400px";
-		imageContainer.style.overflowY = "auto";
 		this.contentEl.appendChild(imageContainer); // Explicitly append
 
 		this.imageUrls.forEach(url => {
-			const imgWrapper = imageContainer.createDiv(); // Wrap image in a div
-			imgWrapper.style.border = "2px solid transparent";
-			imgWrapper.style.cursor = "pointer";
-			imgWrapper.style.padding = "5px";
+			const imgWrapper = imageContainer.createDiv({ cls: 'image-grid-item-wrapper' }); // Wrap image in a div
 
-			const img = imgWrapper.createEl("img", { attr: { src: url } });
-			img.style.maxWidth = '150px';
-			img.style.maxHeight = '150px';
-			img.style.objectFit = 'contain';
+			const img = imgWrapper.createEl("img", { attr: { src: url }, cls: 'image-grid-item' });
 			img.onclick = () => {
 				if (this.selectedImageUrl) {
 					const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
