@@ -1,4 +1,4 @@
-# Obsidian SteamGridDB Plugin
+# Obsidian SteamGridDB Image Embedder
 
 This Obsidian plugin allows you to easily search for game images on [SteamGridDB](https://www.steamgriddb.com/) and embed them directly into your notes. It supports interactive selection of both the game and the specific image you want to use.
 
@@ -16,7 +16,7 @@ This Obsidian plugin allows you to easily search for game images on [SteamGridDB
 Before using the plugin, you need to obtain an API key from SteamGridDB:
 1.  Go to [SteamGridDB Profile Preferences](https://www.steamgriddb.com/profile/preferences/api).
 2.  Generate and copy your API key.
-3.  In Obsidian, go to **Settings** -> **Community Plugins** -> **SteamGridDB Plugin** (or similar name) and paste your API key into the "SteamGridDB API Key" field.
+3.  In Obsidian, go to **Settings** -> **Community Plugins**, and enable "SteamGridDB Image Embedder" and paste your API key into the "SteamGridDB API Key" field.
 
 ### 2. Using the "Search SteamGridDB" Command
 
@@ -51,27 +51,20 @@ This method allows you to automatically trigger the image embedding process when
 
     **Example `Gaming Backlog Template.md` snippet:**
 
-    ```markdown
+    ```javascript
     <%*
     const title = tp.file.title;
-    tR += `---
-Platform: PC
-Status: Not Playing
-Finished: 
-```
----
-
-# ${title}
-
-`;
-    // This command will trigger the interactive game and image selection
+    const urlTitle = title.trim().replace(/\s+/g, "+");
+    tR += `---\nPlatform: PC\nStatus: Not Playing\nFinished: \n---\n\n# ${title}\n\n`;
+    // Call the new command after the title
     await app.commands.executeCommandById('obsidian-steamgriddb:embed-steamgriddb-image-for-note');
-    tR += `
-    ## Notes:
-    -
-    `;
+    tR += `\n## Notes:\n-\n`;
     %>
     ```
+
+    **Example of embedded image after using Templater:**
+
+    ![Image Example](image_example.jpg)
 
 4.  When you create a new note using this template, the interactive modals for game and image selection will appear, and the chosen image will be embedded.
 
@@ -89,7 +82,7 @@ Finished:
 2.  Navigate to your Obsidian vault's plugins folder: `YourVault/.obsidian/plugins/`.
 3.  Create a new folder named `obsidian-steamgriddb`.
 4.  Place `main.js` and `manifest.json` inside the `obsidian-steamgriddb` folder.
-5.  In Obsidian, go to **Settings** -> **Community Plugins**, and enable "SteamGridDB Plugin".
+5.  In Obsidian, go to **Settings** -> **Community Plugins**, and enable "SteamGridDB Image Embedder".
 
 ### Method 2: From Source (for Developers)
 
@@ -112,4 +105,4 @@ Finished:
     ```
     This will compile `main.ts` into `main.js`.
 5.  Copy the `obsidian-steamgriddb` folder (containing `main.js` and `manifest.json`) into your Obsidian vault's plugins folder: `YourVault/.obsidian/plugins/`.
-6.  In Obsidian, go to **Settings** -> **Community Plugins**, and enable "SteamGridDB Plugin".
+6.  In Obsidian, go to **Settings** -> **Community Plugins**, and enable "SteamGridDB Image Embedder".
