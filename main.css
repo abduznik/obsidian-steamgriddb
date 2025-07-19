@@ -1,0 +1,29 @@
+/* styles.css */
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.image-grid-item-wrapper {
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 5px;
+}
+.image-grid-item-wrapper.selected {
+  border-color: var(--interactive-accent);
+}
+.image-grid-item {
+  max-width: 150px;
+  max-height: 150px;
+  object-fit: contain;
+}
+.modal-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.modal-button-container button {
+  margin-left: 10px;
+}

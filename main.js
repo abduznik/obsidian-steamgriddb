@@ -243,21 +243,10 @@ var ImageSelectModal = class extends import_obsidian.Modal {
     contentEl.empty();
     contentEl.createEl("h2", { text: "Select an Image" });
     const imageContainer = contentEl.createDiv({ cls: "image-grid" });
-    imageContainer.style.display = "flex";
-    imageContainer.style.flexWrap = "wrap";
-    imageContainer.style.gap = "10px";
-    imageContainer.style.maxHeight = "400px";
-    imageContainer.style.overflowY = "auto";
     this.contentEl.appendChild(imageContainer);
     this.imageUrls.forEach((url) => {
-      const imgWrapper = imageContainer.createDiv();
-      imgWrapper.style.border = "2px solid transparent";
-      imgWrapper.style.cursor = "pointer";
-      imgWrapper.style.padding = "5px";
-      const img = imgWrapper.createEl("img", { attr: { src: url } });
-      img.style.maxWidth = "150px";
-      img.style.maxHeight = "150px";
-      img.style.objectFit = "contain";
+      const imgWrapper = imageContainer.createDiv({ cls: "image-grid-item-wrapper" });
+      const img = imgWrapper.createEl("img", { attr: { src: url }, cls: "image-grid-item" });
       img.onclick = () => {
         if (this.selectedImageUrl) {
           const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
