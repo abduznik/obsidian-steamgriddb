@@ -1,5 +1,5 @@
 {
-	"id": "obsidian-steamgriddb",
+	"id": "steamgriddb-embedder",
 	"name": "SteamGridDB Image Embedder",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
