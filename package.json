@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsc -watch",
-    "build": "esbuild main.ts --bundle --outfile=main.js --external:obsidian --format=cjs --platform=node",
+    "build": "node node_modules/esbuild/bin/esbuild main.ts --bundle --outfile=main.js --external:obsidian --format=cjs --platform=node",
     "lint": "eslint ."
   },
   "keywords": [],
