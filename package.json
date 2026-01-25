@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-steamgriddb",
+  "name": "steamgriddb-images",
   "version": "1.0.0",
   "description": "Embeds images from SteamGridDB based on the note title.",
   "main": "main.js",
@@ -8,7 +8,7 @@
     "build": "esbuild main.ts --bundle --outfile=main.js --external:obsidian --format=cjs --platform=node"
   },
   "keywords": [],
-  "author": "Gemini",
+  "author": "abduznik",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^16.11.6",
