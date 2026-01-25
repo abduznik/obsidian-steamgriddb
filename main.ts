@@ -1,6 +1,7 @@
 import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, request } from 'obsidian';
-import { GameSelectModal } from "./src/modals/GameSelectModal";
-import { ImageSelectModal } from "./src/modals/ImageSelectModal";
+import { GameSelectModal } from "./GameSelectModal";
+import { ImageSelectModal } from "./ImageSelectModal";
+import { SteamGridDBGame, SteamGridDBImage } from "./types";
 
 import './styles.css';
 
@@ -23,6 +24,7 @@ export default class SteamGridDBPlugin extends Plugin {
 	 * Called when the plugin is loaded.
 	 * Initializes settings and registers commands.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	async onload() {
 		await this.loadSettings();
 
@@ -30,10 +32,10 @@ export default class SteamGridDBPlugin extends Plugin {
 
 		        this.addCommand({
             id: 'embed-steamgriddb-image-for-note',
-            name: 'Embed SteamGridDB Image for Current Note (Interactive)',
+            name: 'Embed image for note',
             callback: async () => {
                 if (!this.settings.steamGridDBApiKey) {
-                    new Notice('SteamGridDB API Key is not set. Please set it in the plugin settings.');
+                    new Notice('API key is not set. Please set it in the plugin settings.');
                     return;
                 }
 
@@ -57,6 +59,7 @@ export default class SteamGridDBPlugin extends Plugin {
                     return;
                 }
 
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 new GameSelectModal(this.app, games, async (selectedGame) => {
                     if (!selectedGame) {
                         new Notice('No game selected.');
@@ -101,16 +104,16 @@ export default class SteamGridDBPlugin extends Plugin {
 
         this.addCommand({
             id: 'search-steamgriddb',
-            name: 'Search SteamGridDB',
+            name: 'Search for steamgriddb image',
             editorCallback: async (editor: Editor, _view: MarkdownView) => {
 				if (!this.settings.steamGridDBApiKey) {
-					new Notice('SteamGridDB API Key is not set. Please set it in the plugin settings.');
+					new Notice('API key is not set. Please set it in the plugin settings.');
 					return;
 				}
 
 				const file = this.app.workspace.getActiveFile();
 				if (!file) {
-					new Notice('No active file');
+					new Notice('No file is active');
 					return;
 				}
 
@@ -122,6 +125,7 @@ export default class SteamGridDBPlugin extends Plugin {
 					return;
 				}
 
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				const gameSelectModal = new GameSelectModal(this.app, games, async (selectedGame) => {
 					if (!selectedGame) {
 						new Notice('No game selected.');
@@ -160,7 +164,7 @@ export default class SteamGridDBPlugin extends Plugin {
 	 * Loads plugin settings from data.
 	 */
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<SteamGridDBSettings>);
 	}
 
 	/**
@@ -175,151 +179,39 @@ export default class SteamGridDBPlugin extends Plugin {
 	 * @param gameName The name of the game to search for.
 	 * @returns A promise that resolves to an array of game objects.
 	 */
-	async fetchGames(gameName: string): Promise<any[]> {
+	async fetchGames(gameName: string): Promise<SteamGridDBGame[]> {
 		const url = `https://www.steamgriddb.com/api/v2/search/autocomplete/${encodeURIComponent(gameName)}`;
 		const response = await request({
 			url: url,
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
-			}
-		});
-		const data = JSON.parse(response);
-		return data.data;
-	}
-
-	/**
-	 * Fetches grid images for a given game ID from SteamGridDB API.
-	 * @param gameId The ID of the game.
-	 * @returns A promise that resolves to an array of image objects.
-	 */
-	async fetchGrids(gameId: number): Promise<any[]> {
-		const url = `https://www.steamgriddb.com/api/v2/grids/game/${gameId}`;
-		const response = await request({
-			url: url,
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
-			}
-		});
-		const data = JSON.parse(response);
-		return data.data;
-	}
-}
-
-/**
- * Modal for selecting a game from a list of search results.
- */
-class GameSelectModal extends Modal {
-	games: any[];
-	onSelect: (selectedGame: any | null) => void;
-
-	constructor(app: App, games: any[], onSelect: (selectedGame: any | null) => void) {
-		super(app);
-		this.games = games;
-		this.onSelect = onSelect;
-	}
-
-	/**
-	 * Displays the game selection UI.
-	 */
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.createEl('h2', { text: 'Select a Game' });
-
-		const gameList = contentEl.createDiv({ cls: 'game-list' });
-		this.games.forEach(game => {
-			const gameItem = gameList.createEl('div', { cls: 'game-list-item' });
-			gameItem.setText(game.name);
-			gameItem.onclick = () => {
-				this.onSelect(game);
-				this.close();
-			};
-		});
-
-		const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-		buttonContainer.createEl('button', { text: 'Cancel' }).onclick = () => {
-			this.onSelect(null);
-			this.close();
-		};
-
-		contentEl.createDiv({ cls: 'steamgriddb-footer', text: 'Powered by SteamGridDB API' });
-	}
-
-	/**
-	 * Cleans up the modal content on close.
-	 */
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-/**
- * Modal for selecting an image from a list of grid images.
- */
-class ImageSelectModal extends Modal {
-	imageUrls: string[];
-	selectedImageUrl: string | null = null;
-	onSelect: (selectedUrl: string | null) => void;
-	gameName: string;
-
-	constructor(app: App, imageUrls: string[], gameName: string, onSelect: (selectedUrl: string | null) => void) {
-		super(app);
-		this.imageUrls = imageUrls;
-		this.onSelect = onSelect;
-	}
-
-	/**
-	 * Displays the image selection UI.
-	 */
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.createEl('h2', { text: 'Select an Image' });
-
-		const imageContainer = contentEl.createDiv({ cls: 'image-grid' });
-		this.contentEl.appendChild(imageContainer); // Explicitly append
-
-		this.imageUrls.forEach(url => {
-			const imgWrapper = imageContainer.createDiv({ cls: 'image-grid-item-wrapper' }); // Wrap image in a div
-
-			const img = imgWrapper.createEl("img", { attr: { src: url }, cls: 'image-grid-item' });
-			img.onclick = () => {
-				if (this.selectedImageUrl) {
-					const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
-					if (prevSelected) prevSelected.removeClass('selected');
+				                'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
+				            }
+				        });
+				        const data = JSON.parse(response) as { data: SteamGridDBGame[] };
+				        return data.data;
+				    }
+				
+				    /**
+				     * Fetches grid images for a given game ID from SteamGridDB API.
+				     * @param gameId The ID of the game.
+				     * @returns A promise that resolves to an array of image objects.
+				     */
+				    async fetchGrids(gameId: number): Promise<SteamGridDBImage[]> {
+				        const url = `https://www.steamgriddb.com/api/v2/grids/game/${gameId}`;
+				        const response = await request({
+				            url: url,
+				            method: 'GET',
+				            headers: {
+				                'Content-Type': 'application/json',
+				                'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
+				            }
+				        });
+				        const data = JSON.parse(response) as { data: SteamGridDBImage[] };
+				        return data.data;
+				    }
 				}
-				this.selectedImageUrl = url;
-				img.addClass('selected');
-			};
-		});
-
-		const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-		buttonContainer.createEl('button', { text: 'Accept', cls: 'mod-cta' }).onclick = () => {
-			this.onSelect(this.selectedImageUrl);
-			this.close();
-		};
-		buttonContainer.createEl('button', { text: 'Cancel' }).onclick = () => {
-			this.onSelect(null);
-			this.close();
-		};
-
-		contentEl.createDiv({ cls: 'steamgriddb-footer', text: 'Powered by SteamGridDB API' });
-	}
-
-	/**
-	 * Cleans up the modal content on close.
-	 */
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
 /**
  * Settings tab for the SteamGridDB plugin.
  * Allows users to configure their API key.
@@ -340,11 +232,9 @@ class SteamGridDBSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'SteamGridDB Image Embedder Settings'});
-
 		new Setting(containerEl)
-			.setName('SteamGridDB API Key')
-			.setDesc('Enter your SteamGridDB API Key. Get one from steamgriddb.com/profile/preferences/api')
+			.setName('Steamgriddb API key')
+			.setDesc('Enter your SteamGridDB API key. Get one from steamgriddb.com/profile/preferences/api')
 			.addText(text => text
 				.setPlaceholder('Enter your API key')
 				.setValue(this.plugin.settings.steamGridDBApiKey)

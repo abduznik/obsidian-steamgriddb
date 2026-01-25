@@ -20,7 +20,7 @@ export class ImageSelectModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl('h2', { text: 'Select an Image' });
+		contentEl.createEl('h2', { text: 'Select an image' });
 
 		const imageContainer = contentEl.createDiv({ cls: 'image-grid' });
 		this.contentEl.appendChild(imageContainer); // Explicitly append

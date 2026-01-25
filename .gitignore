@@ -1,1 +1,18 @@
-data.json
+# Dependency directories
+node_modules/
+
+# Build outputs
+main.js
+
+# Log files
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# ESLint cache
+.eslintcache
+
+# IDE - VS Code
+.vscode/

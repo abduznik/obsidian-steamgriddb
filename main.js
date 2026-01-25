@@ -23,56 +23,144 @@ __export(main_exports, {
   default: () => SteamGridDBPlugin
 });
 module.exports = __toCommonJS(main_exports);
+var import_obsidian3 = require("obsidian");
+
+// GameSelectModal.ts
 var import_obsidian = require("obsidian");
+var GameSelectModal = class extends import_obsidian.Modal {
+  constructor(app, games, onSelect) {
+    super(app);
+    this.games = games;
+    this.onSelect = onSelect;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: "Select a game" });
+    const gameList = contentEl.createDiv({ cls: "game-list" });
+    this.games.forEach((game) => {
+      const gameItem = gameList.createEl("div", { cls: "game-list-item" });
+      gameItem.setText(game.name);
+      gameItem.onclick = () => {
+        this.onSelect(game);
+        this.close();
+      };
+    });
+    const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
+    buttonContainer.createEl("button", { text: "Cancel" }).onclick = () => {
+      this.onSelect(null);
+      this.close();
+    };
+    contentEl.createDiv({ cls: "steamgriddb-footer", text: "Powered by SteamGridDB API" });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+};
+
+// ImageSelectModal.ts
+var import_obsidian2 = require("obsidian");
+var ImageSelectModal = class extends import_obsidian2.Modal {
+  constructor(app, imageUrls, gameName, onSelect) {
+    super(app);
+    this.selectedImageUrl = null;
+    this.imageUrls = imageUrls;
+    this.onSelect = onSelect;
+  }
+  /**
+   * Displays the image selection UI.
+   */
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: "Select an image" });
+    const imageContainer = contentEl.createDiv({ cls: "image-grid" });
+    this.contentEl.appendChild(imageContainer);
+    this.imageUrls.forEach((url) => {
+      const imgWrapper = imageContainer.createDiv({ cls: "image-grid-item-wrapper" });
+      const img = imgWrapper.createEl("img", { attr: { src: url }, cls: "image-grid-item" });
+      img.onclick = () => {
+        if (this.selectedImageUrl) {
+          const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
+          if (prevSelected)
+            prevSelected.removeClass("selected");
+        }
+        this.selectedImageUrl = url;
+        img.addClass("selected");
+      };
+    });
+    const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
+    buttonContainer.createEl("button", { text: "Accept", cls: "mod-cta" }).onclick = () => {
+      this.onSelect(this.selectedImageUrl);
+      this.close();
+    };
+    buttonContainer.createEl("button", { text: "Cancel" }).onclick = () => {
+      this.onSelect(null);
+      this.close();
+    };
+    contentEl.createDiv({ cls: "steamgriddb-footer", text: "Powered by SteamGridDB API" });
+  }
+  /**
+   * Cleans up the modal content on close.
+   */
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+};
+
+// main.ts
 var DEFAULT_SETTINGS = {
   steamGridDBApiKey: ""
 };
-var SteamGridDBPlugin = class extends import_obsidian.Plugin {
+var SteamGridDBPlugin = class extends import_obsidian3.Plugin {
   /**
    * Called when the plugin is loaded.
    * Initializes settings and registers commands.
    */
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new SteamGridDBSettingTab(this.app, this));
     this.addCommand({
       id: "embed-steamgriddb-image-for-note",
-      name: "Embed SteamGridDB Image for Current Note (Interactive)",
+      name: "Embed image for note",
       callback: async () => {
         if (!this.settings.steamGridDBApiKey) {
-          new import_obsidian.Notice("SteamGridDB API Key is not set. Please set it in the plugin settings.");
+          new import_obsidian3.Notice("API key is not set. Please set it in the plugin settings.");
           return;
         }
         const file = this.app.workspace.getActiveFile();
         if (!file) {
-          new import_obsidian.Notice("No active file");
+          new import_obsidian3.Notice("No active file");
           return;
         }
-        const editor = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView)?.editor;
+        const editor = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView)?.editor;
         if (!editor) {
-          new import_obsidian.Notice("No active editor");
+          new import_obsidian3.Notice("No active editor");
           return;
         }
         const gameName = file.basename;
         const games = await this.fetchGames(gameName);
         if (games.length === 0) {
-          new import_obsidian.Notice(`No games found for "${gameName}"`);
+          new import_obsidian3.Notice(`No games found for "${gameName}"`);
           return;
         }
         new GameSelectModal(this.app, games, async (selectedGame) => {
           if (!selectedGame) {
-            new import_obsidian.Notice("No game selected.");
+            new import_obsidian3.Notice("No game selected.");
             return;
           }
           const images = await this.fetchGrids(selectedGame.id);
           if (images.length === 0) {
-            new import_obsidian.Notice(`No images found for "${selectedGame.name}"`);
+            new import_obsidian3.Notice(`No images found for "${selectedGame.name}"`);
             return;
           }
           const imageUrls = images.map((image) => image.url);
           new ImageSelectModal(this.app, imageUrls, selectedGame.name, (selectedUrl) => {
             if (!selectedUrl) {
-              new import_obsidian.Notice("No image selected.");
+              new import_obsidian3.Notice("No image selected.");
               return;
             }
             const imageMarkdown = `![${selectedGame.name} | 300](${selectedUrl})`;
@@ -86,9 +174,9 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
             }
             if (insertionLine !== -1) {
               editor.replaceRange(imageMarkdown + "\n", { line: insertionLine, ch: 0 });
-              new import_obsidian.Notice(`Embedded image for "${selectedGame.name}"`);
+              new import_obsidian3.Notice(`Embedded image for "${selectedGame.name}"`);
             } else {
-              new import_obsidian.Notice(`Could not find "# ${file.basename}" in the note to embed the image.`);
+              new import_obsidian3.Notice(`Could not find "# ${file.basename}" in the note to embed the image.`);
             }
           }).open();
         }).open();
@@ -96,31 +184,31 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
     });
     this.addCommand({
       id: "search-steamgriddb",
-      name: "Search SteamGridDB",
+      name: "Search for steamgriddb image",
       editorCallback: async (editor, _view) => {
         if (!this.settings.steamGridDBApiKey) {
-          new import_obsidian.Notice("SteamGridDB API Key is not set. Please set it in the plugin settings.");
+          new import_obsidian3.Notice("API key is not set. Please set it in the plugin settings.");
           return;
         }
         const file = this.app.workspace.getActiveFile();
         if (!file) {
-          new import_obsidian.Notice("No active file");
+          new import_obsidian3.Notice("No file is active");
           return;
         }
         const gameName = file.basename;
         const games = await this.fetchGames(gameName);
         if (games.length === 0) {
-          new import_obsidian.Notice(`No games found for "${gameName}"`);
+          new import_obsidian3.Notice(`No games found for "${gameName}"`);
           return;
         }
         const gameSelectModal = new GameSelectModal(this.app, games, async (selectedGame) => {
           if (!selectedGame) {
-            new import_obsidian.Notice("No game selected.");
+            new import_obsidian3.Notice("No game selected.");
             return;
           }
           const images = await this.fetchGrids(selectedGame.id);
           if (images.length === 0) {
-            new import_obsidian.Notice(`No images found for "${selectedGame.name}"`);
+            new import_obsidian3.Notice(`No images found for "${selectedGame.name}"`);
             return;
           }
           const imageUrls = images.map((image) => image.url);
@@ -160,7 +248,7 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
   */
   async fetchGames(gameName) {
     const url = `https://www.steamgriddb.com/api/v2/search/autocomplete/${encodeURIComponent(gameName)}`;
-    const response = await (0, import_obsidian.request)({
+    const response = await (0, import_obsidian3.request)({
       url,
       method: "GET",
       headers: {
@@ -179,7 +267,7 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
    */
   async fetchGrids(gameId) {
     const url = `https://www.steamgriddb.com/api/v2/grids/game/${gameId}`;
-    const response = await (0, import_obsidian.request)({
+    const response = await (0, import_obsidian3.request)({
       url,
       method: "GET",
       headers: {
@@ -192,92 +280,7 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
     return data.data;
   }
 };
-var GameSelectModal = class extends Modal {
-  constructor(app, games, onSelect) {
-    super(app);
-    this.games = games;
-    this.onSelect = onSelect;
-  }
-  /**
-   * Displays the game selection UI.
-   */
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.createEl("h2", { text: "Select a Game" });
-    const gameList = contentEl.createDiv({ cls: "game-list" });
-    this.games.forEach((game) => {
-      const gameItem = gameList.createEl("div", { cls: "game-list-item" });
-      gameItem.setText(game.name);
-      gameItem.onclick = () => {
-        this.onSelect(game);
-        this.close();
-      };
-    });
-    const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
-    buttonContainer.createEl("button", { text: "Cancel" }).onclick = () => {
-      this.onSelect(null);
-      this.close();
-    };
-    contentEl.createDiv({ cls: "steamgriddb-footer", text: "Powered by SteamGridDB API" });
-  }
-  /**
-   * Cleans up the modal content on close.
-   */
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
-  }
-};
-var ImageSelectModal = class extends Modal {
-  constructor(app, imageUrls, gameName, onSelect) {
-    super(app);
-    this.selectedImageUrl = null;
-    this.imageUrls = imageUrls;
-    this.onSelect = onSelect;
-  }
-  /**
-   * Displays the image selection UI.
-   */
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.createEl("h2", { text: "Select an Image" });
-    const imageContainer = contentEl.createDiv({ cls: "image-grid" });
-    this.contentEl.appendChild(imageContainer);
-    this.imageUrls.forEach((url) => {
-      const imgWrapper = imageContainer.createDiv({ cls: "image-grid-item-wrapper" });
-      const img = imgWrapper.createEl("img", { attr: { src: url }, cls: "image-grid-item" });
-      img.onclick = () => {
-        if (this.selectedImageUrl) {
-          const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
-          if (prevSelected)
-            prevSelected.removeClass("selected");
-        }
-        this.selectedImageUrl = url;
-        img.addClass("selected");
-      };
-    });
-    const buttonContainer = contentEl.createDiv({ cls: "modal-button-container" });
-    buttonContainer.createEl("button", { text: "Accept", cls: "mod-cta" }).onclick = () => {
-      this.onSelect(this.selectedImageUrl);
-      this.close();
-    };
-    buttonContainer.createEl("button", { text: "Cancel" }).onclick = () => {
-      this.onSelect(null);
-      this.close();
-    };
-    contentEl.createDiv({ cls: "steamgriddb-footer", text: "Powered by SteamGridDB API" });
-  }
-  /**
-   * Cleans up the modal content on close.
-   */
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
-  }
-};
-var SteamGridDBSettingTab = class extends import_obsidian.PluginSettingTab {
+var SteamGridDBSettingTab = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -288,8 +291,7 @@ var SteamGridDBSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "SteamGridDB Image Embedder Settings" });
-    new import_obsidian.Setting(containerEl).setName("SteamGridDB API Key").setDesc("Enter your SteamGridDB API Key. Get one from steamgriddb.com/profile/preferences/api").addText((text) => text.setPlaceholder("Enter your API key").setValue(this.plugin.settings.steamGridDBApiKey).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("Steamgriddb API key").setDesc("Enter your SteamGridDB API key. Get one from steamgriddb.com/profile/preferences/api").addText((text) => text.setPlaceholder("Enter your API key").setValue(this.plugin.settings.steamGridDBApiKey).onChange(async (value) => {
       this.plugin.settings.steamGridDBApiKey = value;
       await this.plugin.saveSettings();
     }));
