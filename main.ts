@@ -3,7 +3,6 @@ import { GameSelectModal } from "./src/modals/GameSelectModal";
 import { ImageSelectModal } from "./src/modals/ImageSelectModal";
 
 import './styles.css';
-import SGDB from "steamgriddb";
 
 
 interface SteamGridDBSettings {
@@ -103,7 +102,7 @@ export default class SteamGridDBPlugin extends Plugin {
         this.addCommand({
             id: 'search-steamgriddb',
             name: 'Search SteamGridDB',
-            editorCallback: async (editor: Editor, view: MarkdownView) => {
+            editorCallback: async (editor: Editor, _view: MarkdownView) => {
 				if (!this.settings.steamGridDBApiKey) {
 					new Notice('SteamGridDB API Key is not set. Please set it in the plugin settings.');
 					return;
@@ -154,7 +153,7 @@ export default class SteamGridDBPlugin extends Plugin {
 	 * Cleans up any resources.
 	 */
 	onunload() {
-
+		// No specific cleanup required
 	}
 
 	/**
@@ -211,6 +210,117 @@ export default class SteamGridDBPlugin extends Plugin {
 }
 
 /**
+ * Modal for selecting a game from a list of search results.
+ */
+class GameSelectModal extends Modal {
+	games: any[];
+	onSelect: (selectedGame: any | null) => void;
+
+	constructor(app: App, games: any[], onSelect: (selectedGame: any | null) => void) {
+		super(app);
+		this.games = games;
+		this.onSelect = onSelect;
+	}
+
+	/**
+	 * Displays the game selection UI.
+	 */
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl('h2', { text: 'Select a Game' });
+
+		const gameList = contentEl.createDiv({ cls: 'game-list' });
+		this.games.forEach(game => {
+			const gameItem = gameList.createEl('div', { cls: 'game-list-item' });
+			gameItem.setText(game.name);
+			gameItem.onclick = () => {
+				this.onSelect(game);
+				this.close();
+			};
+		});
+
+		const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
+		buttonContainer.createEl('button', { text: 'Cancel' }).onclick = () => {
+			this.onSelect(null);
+			this.close();
+		};
+
+		contentEl.createDiv({ cls: 'steamgriddb-footer', text: 'Powered by SteamGridDB API' });
+	}
+
+	/**
+	 * Cleans up the modal content on close.
+	 */
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
+ * Modal for selecting an image from a list of grid images.
+ */
+class ImageSelectModal extends Modal {
+	imageUrls: string[];
+	selectedImageUrl: string | null = null;
+	onSelect: (selectedUrl: string | null) => void;
+	gameName: string;
+
+	constructor(app: App, imageUrls: string[], gameName: string, onSelect: (selectedUrl: string | null) => void) {
+		super(app);
+		this.imageUrls = imageUrls;
+		this.onSelect = onSelect;
+	}
+
+	/**
+	 * Displays the image selection UI.
+	 */
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl('h2', { text: 'Select an Image' });
+
+		const imageContainer = contentEl.createDiv({ cls: 'image-grid' });
+		this.contentEl.appendChild(imageContainer); // Explicitly append
+
+		this.imageUrls.forEach(url => {
+			const imgWrapper = imageContainer.createDiv({ cls: 'image-grid-item-wrapper' }); // Wrap image in a div
+
+			const img = imgWrapper.createEl("img", { attr: { src: url }, cls: 'image-grid-item' });
+			img.onclick = () => {
+				if (this.selectedImageUrl) {
+					const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
+					if (prevSelected) prevSelected.removeClass('selected');
+				}
+				this.selectedImageUrl = url;
+				img.addClass('selected');
+			};
+		});
+
+		const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
+		buttonContainer.createEl('button', { text: 'Accept', cls: 'mod-cta' }).onclick = () => {
+			this.onSelect(this.selectedImageUrl);
+			this.close();
+		};
+		buttonContainer.createEl('button', { text: 'Cancel' }).onclick = () => {
+			this.onSelect(null);
+			this.close();
+		};
+
+		contentEl.createDiv({ cls: 'steamgriddb-footer', text: 'Powered by SteamGridDB API' });
+	}
+
+	/**
+	 * Cleans up the modal content on close.
+	 */
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
  * Settings tab for the SteamGridDB plugin.
  * Allows users to configure their API key.
  */
@@ -244,4 +354,3 @@ class SteamGridDBSettingTab extends PluginSettingTab {
 				}));
 	}
 }
-

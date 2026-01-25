@@ -5,6 +5,6 @@
 	"minAppVersion": "0.15.0",
 	"description": "Embeds images from SteamGridDB based on the note title.",
 	"author": "abduznik",
-	"authorUrl": "",
+	"authorUrl": "https://github.com/abduznik",
 	"isDesktopOnly": false
 }

@@ -97,7 +97,7 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
     this.addCommand({
       id: "search-steamgriddb",
       name: "Search SteamGridDB",
-      editorCallback: async (editor, view) => {
+      editorCallback: async (editor, _view) => {
         if (!this.settings.steamGridDBApiKey) {
           new import_obsidian.Notice("SteamGridDB API Key is not set. Please set it in the plugin settings.");
           return;
@@ -192,7 +192,7 @@ var SteamGridDBPlugin = class extends import_obsidian.Plugin {
     return data.data;
   }
 };
-var GameSelectModal = class extends import_obsidian.Modal {
+var GameSelectModal = class extends Modal {
   constructor(app, games, onSelect) {
     super(app);
     this.games = games;
@@ -219,6 +219,7 @@ var GameSelectModal = class extends import_obsidian.Modal {
       this.onSelect(null);
       this.close();
     };
+    contentEl.createDiv({ cls: "steamgriddb-footer", text: "Powered by SteamGridDB API" });
   }
   /**
    * Cleans up the modal content on close.
@@ -228,7 +229,7 @@ var GameSelectModal = class extends import_obsidian.Modal {
     contentEl.empty();
   }
 };
-var ImageSelectModal = class extends import_obsidian.Modal {
+var ImageSelectModal = class extends Modal {
   constructor(app, imageUrls, gameName, onSelect) {
     super(app);
     this.selectedImageUrl = null;
@@ -250,7 +251,8 @@ var ImageSelectModal = class extends import_obsidian.Modal {
       img.onclick = () => {
         if (this.selectedImageUrl) {
           const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
-          if (prevSelected) prevSelected.removeClass("selected");
+          if (prevSelected)
+            prevSelected.removeClass("selected");
         }
         this.selectedImageUrl = url;
         img.addClass("selected");
@@ -265,6 +267,7 @@ var ImageSelectModal = class extends import_obsidian.Modal {
       this.onSelect(null);
       this.close();
     };
+    contentEl.createDiv({ cls: "steamgriddb-footer", text: "Powered by SteamGridDB API" });
   }
   /**
    * Cleans up the modal content on close.

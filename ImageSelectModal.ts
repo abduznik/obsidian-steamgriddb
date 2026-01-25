@@ -48,6 +48,8 @@ export class ImageSelectModal extends Modal {
 			this.onSelect(null);
 			this.close();
 		};
+
+		contentEl.createDiv({ cls: 'steamgriddb-footer', text: 'Powered by SteamGridDB API' });
 	}
 
 	/**

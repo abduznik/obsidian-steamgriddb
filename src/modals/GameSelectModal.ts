@@ -32,6 +32,8 @@ import { App, Modal } from "obsidian";
             this.onSelect(null);
             this.close();
         };
+
+        contentEl.createDiv({ cls: 'steamgriddb-footer', text: 'Powered by SteamGridDB API' });
     }
 
     onClose() {
