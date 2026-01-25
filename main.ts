@@ -1,6 +1,10 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, request } from 'obsidian';
+import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, request } from 'obsidian';
+import { GameSelectModal } from "./src/modals/GameSelectModal";
+import { ImageSelectModal } from "./src/modals/ImageSelectModal";
+
 import './styles.css';
 import SGDB from "steamgriddb";
+
 
 interface SteamGridDBSettings {
 	steamGridDBApiKey: string;
@@ -203,113 +207,6 @@ export default class SteamGridDBPlugin extends Plugin {
 		});
 		const data = JSON.parse(response);
 		return data.data;
-	}
-}
-
-/**
- * Modal for selecting a game from a list of search results.
- */
-class GameSelectModal extends Modal {
-	games: any[];
-	onSelect: (selectedGame: any | null) => void;
-
-	constructor(app: App, games: any[], onSelect: (selectedGame: any | null) => void) {
-		super(app);
-		this.games = games;
-		this.onSelect = onSelect;
-	}
-
-	/**
-	 * Displays the game selection UI.
-	 */
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.createEl('h2', { text: 'Select a Game' });
-
-		const gameList = contentEl.createDiv({ cls: 'game-list' });
-		this.games.forEach(game => {
-			const gameItem = gameList.createEl('div', { cls: 'game-list-item' });
-			gameItem.setText(game.name);
-			gameItem.onclick = () => {
-				this.onSelect(game);
-				this.close();
-			};
-		});
-
-		const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-		buttonContainer.createEl('button', { text: 'Cancel' }).onclick = () => {
-			this.onSelect(null);
-			this.close();
-		};
-	}
-
-	/**
-	 * Cleans up the modal content on close.
-	 */
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-/**
- * Modal for selecting an image from a list of grid images.
- */
-class ImageSelectModal extends Modal {
-	imageUrls: string[];
-	selectedImageUrl: string | null = null;
-	onSelect: (selectedUrl: string | null) => void;
-	gameName: string;
-
-	constructor(app: App, imageUrls: string[], gameName: string, onSelect: (selectedUrl: string | null) => void) {
-		super(app);
-		this.imageUrls = imageUrls;
-		this.onSelect = onSelect;
-	}
-
-	/**
-	 * Displays the image selection UI.
-	 */
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.createEl('h2', { text: 'Select an Image' });
-
-		const imageContainer = contentEl.createDiv({ cls: 'image-grid' });
-		this.contentEl.appendChild(imageContainer); // Explicitly append
-
-		this.imageUrls.forEach(url => {
-			const imgWrapper = imageContainer.createDiv({ cls: 'image-grid-item-wrapper' }); // Wrap image in a div
-
-			const img = imgWrapper.createEl("img", { attr: { src: url }, cls: 'image-grid-item' });
-			img.onclick = () => {
-				if (this.selectedImageUrl) {
-					const prevSelected = imageContainer.querySelector(`.image-grid-item[src="${this.selectedImageUrl}"]`);
-					if (prevSelected) prevSelected.removeClass('selected');
-				}
-				this.selectedImageUrl = url;
-				img.addClass('selected');
-			};
-		});
-
-		const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-		buttonContainer.createEl('button', { text: 'Accept', cls: 'mod-cta' }).onclick = () => {
-			this.onSelect(this.selectedImageUrl);
-			this.close();
-		};
-		buttonContainer.createEl('button', { text: 'Cancel' }).onclick = () => {
-			this.onSelect(null);
-			this.close();
-		};
-	}
-
-	/**
-	 * Cleans up the modal content on close.
-	 */
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
 	}
 }
 
