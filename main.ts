@@ -27,84 +27,84 @@ export default class SteamGridDBPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-				this.addSettingTab(new SteamGridDBSettingTab(this.app, this));
+		this.addSettingTab(new SteamGridDBSettingTab(this.app, this));
 
-		        this.addCommand({
-            id: 'embed-steamgriddb-image-for-note',
-            name: 'Embed image for note',
-            callback: async () => {
-                if (!this.settings.steamGridDBApiKey) {
-                    new Notice('API key is not set. Please set it in the plugin settings.');
-                    return;
-                }
+		this.addCommand({
+			id: 'embed-steamgriddb-image-for-note',
+			name: 'Embed image for note',
+			callback: async () => {
+				if (!this.settings.steamGridDBApiKey) {
+					new Notice('API key is not set. Please set it in the plugin settings.');
+					return;
+				}
 
-                const file = this.app.workspace.getActiveFile();
-                if (!file) {
-                    new Notice('No active file');
-                    return;
-                }
+				const file = this.app.workspace.getActiveFile();
+				if (!file) {
+					new Notice('No active file');
+					return;
+				}
 
-                const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
-                if (!editor) {
-                    new Notice('No active editor');
-                    return;
-                }
+				const editor = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+				if (!editor) {
+					new Notice('No active editor');
+					return;
+				}
 
-                const gameName = file.basename;
-                const games = await this.fetchGames(gameName);
+				const gameName = file.basename;
+				const games = await this.fetchGames(gameName);
 
-                if (games.length === 0) {
-                    new Notice(`No games found for "${gameName}"`);
-                    return;
-                }
+				if (games.length === 0) {
+					new Notice(`No games found for "${gameName}"`);
+					return;
+				}
 
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises -- Async callback is needed here to fetch images after selection.
-                new GameSelectModal(this.app, games, async (selectedGame) => {
-                    if (!selectedGame) {
-                        new Notice('No game selected.');
-                        return;
-                    }
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises -- Async callback is needed here to fetch images after selection.
+				new GameSelectModal(this.app, games, async (selectedGame) => {
+					if (!selectedGame) {
+						new Notice('No game selected.');
+						return;
+					}
 
-                    const images = await this.fetchGrids(selectedGame.id);
+					const images = await this.fetchGrids(selectedGame.id);
 
-                    if (images.length === 0) {
-                        new Notice(`No images found for "${selectedGame.name}"`);
-                        return;
-                    }
+					if (images.length === 0) {
+						new Notice(`No images found for "${selectedGame.name}"`);
+						return;
+					}
 
-                    const imageUrls = images.map(image => image.url);
-                    new ImageSelectModal(this.app, imageUrls, selectedGame.name, (selectedUrl) => {
-                        if (!selectedUrl) {
-                            new Notice('No image selected.');
-                            return;
-                        }
+					const imageUrls = images.map(image => image.url);
+					new ImageSelectModal(this.app, imageUrls, selectedGame.name, (selectedUrl) => {
+						if (!selectedUrl) {
+							new Notice('No image selected.');
+							return;
+						}
 
-                        const imageMarkdown = `![${selectedGame.name} | 300](${selectedUrl})`;
+						const imageMarkdown = `![${selectedGame.name} | 300](${selectedUrl})`;
 
-                        const lines = editor.getValue().split('\n');
-                        let insertionLine = -1;
-                        for (let i = 0; i < lines.length; i++) {
-                            if (lines[i].trim().startsWith(`# ${file.basename}`)) {
-                                insertionLine = i + 1;
-                                break;
-                            }
-                        }
+						const lines = editor.getValue().split('\n');
+						let insertionLine = -1;
+						for (let i = 0; i < lines.length; i++) {
+							if (lines[i].trim().startsWith(`# ${file.basename}`)) {
+								insertionLine = i + 1;
+								break;
+							}
+						}
 
-                        if (insertionLine !== -1) {
-                            editor.replaceRange(imageMarkdown + '\n', { line: insertionLine, ch: 0 });
-                            new Notice(`Embedded image for "${selectedGame.name}"`);
-                        } else {
-                            new Notice(`Could not find "# ${file.basename}" in the note to embed the image.`);
-                        }
-                    }).open();
-                }).open();
-            }
-        });
+						if (insertionLine !== -1) {
+							editor.replaceRange(imageMarkdown + '\n', { line: insertionLine, ch: 0 });
+							new Notice(`Embedded image for "${selectedGame.name}"`);
+						} else {
+							new Notice(`Could not find "# ${file.basename}" in the note to embed the image.`);
+						}
+					}).open();
+				}).open();
+			}
+		});
 
-        this.addCommand({
-            id: 'search-steamgriddb',
-            name: 'Search for steamgriddb image',
-            editorCallback: async (editor: Editor, _view: MarkdownView) => {
+		this.addCommand({
+			id: 'search-steamgriddb',
+			name: 'Search for steamgriddb image',
+			editorCallback: async (editor: Editor, _view: MarkdownView) => {
 				if (!this.settings.steamGridDBApiKey) {
 					new Notice('API key is not set. Please set it in the plugin settings.');
 					return;
@@ -173,44 +173,54 @@ export default class SteamGridDBPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-		/**
-	 * Fetches games from SteamGridDB API based on a search query.
-	 * @param gameName The name of the game to search for.
-	 * @returns A promise that resolves to an array of game objects.
-	 */
+	/**
+ * Fetches games from SteamGridDB API based on a search query.
+ * @param gameName The name of the game to search for.
+ * @returns A promise that resolves to an array of game objects.
+ */
 	async fetchGames(gameName: string): Promise<SteamGridDBGame[]> {
 		const url = `https://www.steamgriddb.com/api/v2/search/autocomplete/${encodeURIComponent(gameName)}`;
-		const response = await request({
-			url: url,
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				                'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
-				            }
-				        });
-				        const data = JSON.parse(response) as { data: SteamGridDBGame[] };
-				        return data.data;
-				    }
-				
-				    /**
-				     * Fetches grid images for a given game ID from SteamGridDB API.
-				     * @param gameId The ID of the game.
-				     * @returns A promise that resolves to an array of image objects.
-				     */
-				    async fetchGrids(gameId: number): Promise<SteamGridDBImage[]> {
-				        const url = `https://www.steamgriddb.com/api/v2/grids/game/${gameId}`;
-				        const response = await request({
-				            url: url,
-				            method: 'GET',
-				            headers: {
-				                'Content-Type': 'application/json',
-				                'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
-				            }
-				        });
-				        const data = JSON.parse(response) as { data: SteamGridDBImage[] };
-				        return data.data;
-				    }
+		try {
+			const response = await request({
+				url: url,
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
 				}
+			});
+			const data = JSON.parse(response) as { data: SteamGridDBGame[] };
+			return data.data;
+		} catch {
+			new Notice('Failed to fetch data. Please check your API key and internet connection.');
+			return [];
+		}
+	}
+
+	/**
+	 * Fetches grid images for a given game ID from SteamGridDB API.
+	 * @param gameId The ID of the game.
+	 * @returns A promise that resolves to an array of image objects.
+	 */
+	async fetchGrids(gameId: number): Promise<SteamGridDBImage[]> {
+		const url = `https://www.steamgriddb.com/api/v2/grids/game/${gameId}`;
+		try {
+			const response = await request({
+				url: url,
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${this.settings.steamGridDBApiKey}` // API Key for authentication.
+				}
+			});
+			const data = JSON.parse(response) as { data: SteamGridDBImage[] };
+			return data.data;
+		} catch {
+			new Notice('Failed to fetch data. Please check your API key and internet connection.');
+			return [];
+		}
+	}
+}
 /**
  * Settings tab for the SteamGridDB plugin.
  * Allows users to configure their API key.
@@ -227,7 +237,7 @@ class SteamGridDBSettingTab extends PluginSettingTab {
 	 * Displays the settings UI.
 	 */
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
