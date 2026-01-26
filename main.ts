@@ -5,7 +5,6 @@ import { SteamGridDBGame, SteamGridDBImage } from "./types";
 
 import './styles.css';
 
-
 interface SteamGridDBSettings {
 	steamGridDBApiKey: string;
 }
@@ -24,7 +23,7 @@ export default class SteamGridDBPlugin extends Plugin {
 	 * Called when the plugin is loaded.
 	 * Initializes settings and registers commands.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises -- Obsidian's onload can be async, but doesn't await the returned promise.
 	async onload() {
 		await this.loadSettings();
 
@@ -59,7 +58,7 @@ export default class SteamGridDBPlugin extends Plugin {
                     return;
                 }
 
-                // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises -- Async callback is needed here to fetch images after selection.
                 new GameSelectModal(this.app, games, async (selectedGame) => {
                     if (!selectedGame) {
                         new Notice('No game selected.');
@@ -125,7 +124,7 @@ export default class SteamGridDBPlugin extends Plugin {
 					return;
 				}
 
-				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises -- Async callback is needed here to fetch images after selection.
 				const gameSelectModal = new GameSelectModal(this.app, games, async (selectedGame) => {
 					if (!selectedGame) {
 						new Notice('No game selected.');
