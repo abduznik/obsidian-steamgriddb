@@ -37,7 +37,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        LATEST_VERSION=$(gh release list --limit 1 | awk 'NR>1 {print $3}' || echo "0.0.0")
+        # Use gh to get the latest release tag, default to 0.0.0 if none found
+        LATEST_VERSION=$(gh release list --limit 1 | awk 'NR>1 {print $3}')
+        if [ -z "$LATEST_VERSION" ]; then
+          LATEST_VERSION="0.0.0"
+        fi
         echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
 
     - name: Check if version is newer
@@ -45,7 +49,8 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         LATEST_VERSION=${{ steps.get_latest_version.outputs.LATEST_VERSION }}
-        if [ "$VERSION" != "$LATEST_VERSION" ] || [ "${{ github.event.inputs.force }}" == "true" ]; then
+        FORCE="${{ github.event.inputs.force }}"
+        if [ "$VERSION" != "$LATEST_VERSION" ] || [ "$FORCE" == "true" ]; then
           echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
         else
           echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
@@ -78,11 +83,11 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.VERSION }}
-        name: ${{ steps.get_version.outputs.VERSION }} ${{ github.event.inputs.release_notes != '' && '-' || '' }} ${{ github.event.inputs.release_notes }}
+        name: ${{ steps.get_version.outputs.VERSION }}${{ github.event.inputs.release_notes != '' && format(' - {0}', github.event.inputs.release_notes) || '' }}
         body: |
           Automated release for version ${{ steps.get_version.outputs.VERSION }}
           
-          ${{ github.event.inputs.release_notes }}
+          ${{ github.event.inputs.release_notes || '' }}
           
           Changes in this release:
           - Feature: Configurable image embed width
