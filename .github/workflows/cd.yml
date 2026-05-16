@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: 'Force release even if version hasn\'t changed'
+        description: "Force release even if version hasn't changed"
         type: boolean
         default: false
       release_notes:
-        description: 'Optional release notes for manual release'
+        description: "Optional release notes for manual release"
         required: false
         type: string
 
@@ -37,8 +37,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # Use gh to get the latest release tag, default to 0.0.0 if none found
-        LATEST_VERSION=$(gh release list --limit 1 | awk 'NR>1 {print $3}')
+        LATEST_VERSION=$(gh release list --limit 1 | awk 'NR>1 {print $3}' || echo "0.0.0")
         if [ -z "$LATEST_VERSION" ]; then
           LATEST_VERSION="0.0.0"
         fi
@@ -49,12 +48,24 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         LATEST_VERSION=${{ steps.get_latest_version.outputs.LATEST_VERSION }}
-        FORCE="${{ github.event.inputs.force }}"
+        FORCE="${{ inputs.force }}"
         if [ "$VERSION" != "$LATEST_VERSION" ] || [ "$FORCE" == "true" ]; then
           echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
         else
           echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
         fi
+
+    - name: Prepare Release Info
+      id: release_info
+      run: |
+        VERSION="${{ steps.get_version.outputs.VERSION }}"
+        NOTES="${{ inputs.release_notes }}"
+        if [ -n "$NOTES" ]; then
+          echo "RELEASE_NAME=$VERSION - $NOTES" >> $GITHUB_OUTPUT
+        else
+          echo "RELEASE_NAME=$VERSION" >> $GITHUB_OUTPUT
+        fi
+        echo "RELEASE_NOTES=$NOTES" >> $GITHUB_OUTPUT
 
     - name: Setup Node.js
       if: steps.check_version.outputs.SHOULD_RELEASE == 'true'
@@ -83,11 +94,11 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.get_version.outputs.VERSION }}
-        name: ${{ steps.get_version.outputs.VERSION }}${{ github.event.inputs.release_notes != '' && format(' - {0}', github.event.inputs.release_notes) || '' }}
+        name: ${{ steps.release_info.outputs.RELEASE_NAME }}
         body: |
           Automated release for version ${{ steps.get_version.outputs.VERSION }}
           
-          ${{ github.event.inputs.release_notes || '' }}
+          ${{ steps.release_info.outputs.RELEASE_NOTES }}
           
           Changes in this release:
           - Feature: Configurable image embed width
