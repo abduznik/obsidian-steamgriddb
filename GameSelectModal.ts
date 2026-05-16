@@ -21,7 +21,7 @@ import { SteamGridDBGame } from "./types";
 
         const gameList = contentEl.createDiv({ cls: 'game-list' });
         this.games.forEach(game => {
-            const gameItem = gameList.createEl('div', { cls: 'game-list-item' });
+            const gameItem = gameList.createDiv({ cls: 'game-list-item' });
             gameItem.setText(game.name);
             gameItem.onclick = () => {
                 this.onSelect(game);

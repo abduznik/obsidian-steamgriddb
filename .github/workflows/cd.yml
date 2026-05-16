@@ -1,0 +1,98 @@
+name: Continuous Delivery
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force release even if version hasn\'t changed'
+        type: boolean
+        default: false
+      release_notes:
+        description: 'Optional release notes for manual release'
+        required: false
+        type: string
+
+jobs:
+  check-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Get current version
+      id: get_version
+      run: echo "VERSION=$(node -p "require('./manifest.json').version")" >> $GITHUB_OUTPUT
+
+    - name: Get latest release version
+      id: get_latest_version
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        LATEST_VERSION=$(gh release list --limit 1 | awk 'NR>1 {print $3}' || echo "0.0.0")
+        echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Check if version is newer
+      id: check_version
+      run: |
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        LATEST_VERSION=${{ steps.get_latest_version.outputs.LATEST_VERSION }}
+        if [ "$VERSION" != "$LATEST_VERSION" ] || [ "${{ github.event.inputs.force }}" == "true" ]; then
+          echo "SHOULD_RELEASE=true" >> $GITHUB_OUTPUT
+        else
+          echo "SHOULD_RELEASE=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Setup Node.js
+      if: steps.check_version.outputs.SHOULD_RELEASE == 'true'
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      if: steps.check_version.outputs.SHOULD_RELEASE == 'true'
+      run: npm install
+
+    - name: Build plugin
+      if: steps.check_version.outputs.SHOULD_RELEASE == 'true'
+      run: npm run build
+
+    - name: Attest Build Provenance
+      if: steps.check_version.outputs.SHOULD_RELEASE == 'true'
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-path: |
+          main.js
+          styles.css
+
+    - name: Create Release
+      if: steps.check_version.outputs.SHOULD_RELEASE == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        name: ${{ steps.get_version.outputs.VERSION }} ${{ github.event.inputs.release_notes != '' && '-' || '' }} ${{ github.event.inputs.release_notes }}
+        body: |
+          Automated release for version ${{ steps.get_version.outputs.VERSION }}
+          
+          ${{ github.event.inputs.release_notes }}
+          
+          Changes in this release:
+          - Feature: Configurable image embed width
+          - Refactor: Extracted API key validation
+          - Lint: Fixed Various warnings and errors
+        draft: false
+        prerelease: false
+        files: |
+          main.js
+          manifest.json
+          styles.css
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

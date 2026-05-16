@@ -1,6 +1,6 @@
 {
   "name": "steamgriddb-embedder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Embeds images from SteamGridDB based on the note title.",
   "main": "main.js",
   "type": "module",
@@ -16,7 +16,6 @@
     "@eslint/js": "9.30.1",
     "@types/node": "^16.11.6",
     "esbuild": "^0.19.0",
-    "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-obsidianmd": "0.1.9",
     "globals": "14.0.0",
     "jiti": "2.6.1",

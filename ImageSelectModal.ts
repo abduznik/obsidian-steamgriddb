@@ -6,9 +6,8 @@ export class ImageSelectModal extends Modal {
 	imageUrls: string[];
 	selectedImageUrl: string | null = null;
 	onSelect: (selectedUrl: string | null) => void;
-	gameName: string;
 
-	constructor(app: App, imageUrls: string[], gameName: string, onSelect: (selectedUrl: string | null) => void) {
+	constructor(app: App, imageUrls: string[], onSelect: (selectedUrl: string | null) => void) {
 		super(app);
 		this.imageUrls = imageUrls;
 		this.onSelect = onSelect;

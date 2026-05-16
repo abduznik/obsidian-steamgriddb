@@ -7,10 +7,12 @@ import './styles.css';
 
 interface SteamGridDBSettings {
 	steamGridDBApiKey: string;
+	imageEmbedWidth: string;
 }
 
 const DEFAULT_SETTINGS: SteamGridDBSettings = {
-	steamGridDBApiKey: ''
+	steamGridDBApiKey: '',
+	imageEmbedWidth: '300'
 }
 
 /**
@@ -19,24 +21,29 @@ const DEFAULT_SETTINGS: SteamGridDBSettings = {
 export default class SteamGridDBPlugin extends Plugin {
 	settings!: SteamGridDBSettings;
 
-	/**
-	 * Called when the plugin is loaded.
-	 * Initializes settings and registers commands.
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises -- Obsidian's onload can be async, but doesn't await the returned promise.
-	async onload() {
-		await this.loadSettings();
 
-		this.addSettingTab(new SteamGridDBSettingTab(this.app, this));
+	/**
+	 * Checks if the API key is set and shows a notice if not.
+	 * @returns True if the API key is set, false otherwise.
+	 */
+	private ensureApiKeySet(): boolean {
+		if (!this.settings.steamGridDBApiKey) {
+			new Notice('API key is not set. Please set it in the plugin settings.');
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Registers plugin commands.
+	 */
+	private registerCommands() {
 
 		this.addCommand({
 			id: 'embed-steamgriddb-image-for-note',
 			name: 'Embed image for note',
 			callback: async () => {
-				if (!this.settings.steamGridDBApiKey) {
-					new Notice('API key is not set. Please set it in the plugin settings.');
-					return;
-				}
+				if (!this.ensureApiKeySet()) return;
 
 				const file = this.app.workspace.getActiveFile();
 				if (!file) {
@@ -73,13 +80,14 @@ export default class SteamGridDBPlugin extends Plugin {
 					}
 
 					const imageUrls = images.map(image => image.url);
-					new ImageSelectModal(this.app, imageUrls, selectedGame.name, (selectedUrl) => {
+					new ImageSelectModal(this.app, imageUrls, (selectedUrl) => {
 						if (!selectedUrl) {
 							new Notice('No image selected.');
 							return;
 						}
 
-						const imageMarkdown = `![${selectedGame.name} | 300](${selectedUrl})`;
+						const width = this.settings.imageEmbedWidth || '300';
+						const imageMarkdown = `![${selectedGame.name} | ${width}](${selectedUrl})`;
 
 						const lines = editor.getValue().split('\n');
 						let insertionLine = -1;
@@ -105,10 +113,7 @@ export default class SteamGridDBPlugin extends Plugin {
 			id: 'search-steamgriddb',
 			name: 'Search for steamgriddb image',
 			editorCallback: async (editor: Editor, _view: MarkdownView) => {
-				if (!this.settings.steamGridDBApiKey) {
-					new Notice('API key is not set. Please set it in the plugin settings.');
-					return;
-				}
+				if (!this.ensureApiKeySet()) return;
 
 				const file = this.app.workspace.getActiveFile();
 				if (!file) {
@@ -139,7 +144,7 @@ export default class SteamGridDBPlugin extends Plugin {
 					}
 
 					const imageUrls = images.map(image => image.url);
-					const modal = new ImageSelectModal(this.app, imageUrls, selectedGame.name, (selectedUrl) => {
+					const modal = new ImageSelectModal(this.app, imageUrls, (selectedUrl) => {
 						if (selectedUrl) {
 							editor.replaceSelection(`![${selectedGame.name}](${selectedUrl})`);
 						}
@@ -149,6 +154,19 @@ export default class SteamGridDBPlugin extends Plugin {
 				gameSelectModal.open();
 			}
 		});
+	}
+
+	/**
+	 * Called when the plugin is loaded.
+	 * Initializes settings and registers commands.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises -- Obsidian's onload can be async, but doesn't await the returned promise.
+	async onload() {
+		await this.loadSettings();
+
+		this.addSettingTab(new SteamGridDBSettingTab(this.app, this));
+		
+		this.registerCommands();
 	}
 
 	/**
@@ -249,6 +267,17 @@ class SteamGridDBSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.steamGridDBApiKey)
 				.onChange(async (value) => {
 					this.plugin.settings.steamGridDBApiKey = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Image embed width')
+			.setDesc('Enter the width for the embedded images (e.g., 300, 500, auto).')
+			.addText(text => text
+				.setPlaceholder('300')
+				.setValue(this.plugin.settings.imageEmbedWidth)
+				.onChange(async (value) => {
+					this.plugin.settings.imageEmbedWidth = value;
 					await this.plugin.saveSettings();
 				}));
 	}

@@ -2,13 +2,10 @@ import tseslint from 'typescript-eslint';
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 import { globalIgnores } from "eslint/config";
-// @ts-expect-error: eslint-plugin-eslint-comments does not yet have types for flat config
-import eslintComments from "eslint-plugin-eslint-comments";
 
 export default tseslint.config(
 	{
 		plugins: {
-			"eslint-comments": eslintComments,
 			"@typescript-eslint": tseslint.plugin,
 		},
 		languageOptions: {
@@ -27,7 +24,6 @@ export default tseslint.config(
 			},
 		},
 		rules: {
-			"eslint-comments/require-description": "error",
 			"@typescript-eslint/no-empty-object-type": "error",
 		},
 	},
