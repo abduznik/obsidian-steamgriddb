@@ -1,3 +1,9 @@
+## Support This Project
+
+> **All projects made with passion** 💙
+
+[![Sponsor me](https://img.shields.io/badge/❤️%20Sponsor-GitHub-red?style=for-the-badge)](https://github.com/sponsors/abduznik)
+
 # Obsidian SteamGridDB Image Embedder
 
 This Obsidian plugin allows you to easily search for game images on [SteamGridDB](https://www.steamgriddb.com/) and embed them directly into your notes. It supports interactive selection of both the game and the specific image you want to use.
